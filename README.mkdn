@@ -1,0 +1,22 @@
+# NAME
+
+Test::DataLoader -
+
+# SYNOPSIS
+
+    use Test::DataLoader;
+
+# DESCRIPTION
+
+Test::DataLoader is
+
+# AUTHOR
+
+Takuya Tsuchida <tsucchi {at} cpan.org>
+
+# SEE ALSO
+
+# LICENSE
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.
