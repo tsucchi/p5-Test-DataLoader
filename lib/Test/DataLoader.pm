@@ -32,7 +32,7 @@ sub new {
     bless $self, $class;
 }
 
-sub add_one {
+sub add {
     my ($self, $table_name, $data_id, $data_href, $pk_aref) = @_;
     $self->{data}->{$table_name}->{$data_id} = [$data_href, $pk_aref];
 }
@@ -96,7 +96,7 @@ sub _add_data {
     Carp::croak("data not found") if ( !defined $data );
 
     for my $datum_key ( sort keys %{ $data } ) {
-        $self->add_one($table_name, $datum_key, $data->{$datum_key});
+        $self->add($table_name, $datum_key, $data->{$datum_key});
     }
 }
 

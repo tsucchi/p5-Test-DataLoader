@@ -11,7 +11,7 @@ my $dbh = prepare_employee_db();
 
 subtest 'find_data scalar context', sub {
     my $data = Test::DataLoader->new($dbh);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     }, ['id']);
@@ -22,7 +22,7 @@ subtest 'find_data scalar context', sub {
 
 subtest 'find_data array context', sub {
     my $data = Test::DataLoader->new($dbh);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     }, ['id']);
@@ -35,7 +35,7 @@ subtest 'find_data array context', sub {
 
 subtest 'keys specified by set_unique_keys', sub {
     my $data = Test::DataLoader->new($dbh);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     });
@@ -50,7 +50,7 @@ subtest 'keys specified by set_unique_keys', sub {
 
 subtest 'find_data replaced by option', sub {
     my $data = Test::DataLoader->new($dbh);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     }, ['id']);

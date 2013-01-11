@@ -11,7 +11,7 @@ subtest 'add/load', sub {
     my $dbh = prepare_employee_db();
 
     my $data = Test::DataLoader->new($dbh);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     }, ['id']);
@@ -31,7 +31,7 @@ subtest 'load twice but record is only 1(deleted before insert)', sub {
     my $dbh = prepare_employee_db();
 
     my $data = Test::DataLoader->new($dbh);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     }, ['id']);
@@ -52,7 +52,7 @@ subtest 'load with return value', sub {
     my $dbh = prepare_employee_db();
 
     my $data = Test::DataLoader->new($dbh);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     }, ['id']);
@@ -68,7 +68,7 @@ subtest 'load with auto_increment', sub {
     my $dbh = prepare_employee_db();
 
     my $data = Test::DataLoader->new($dbh);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => undef,
         name => 'aaa',
     }, ['id']);
@@ -87,7 +87,7 @@ subtest 'set_unique_keys', sub {
 
     my $data = Test::DataLoader->new($dbh);
     $data->set_unique_keys('employee', ['id']);
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     });

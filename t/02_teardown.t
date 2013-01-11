@@ -65,7 +65,7 @@ done_testing;
 sub prepare_loader {
     my ($dbh, $teardown_style) = @_;
     my $data = Test::DataLoader->new($dbh, { teardown => $teardown_style });
-    $data->add_one('employee', 1, {
+    $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
     }, ['id']);
