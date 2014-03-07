@@ -18,6 +18,8 @@ our $rollback_teardown   = 1;
 our $delete_teardown     = 0;
 our $do_nothing_teardown = -1;
 
+Otogiri->load_plugin('DeleteCascade');
+
 sub new {
     my ($class, %args) = @_;
     my $connect_info = $args{connect_info};
@@ -52,7 +54,7 @@ sub load {
     my ($data_href, $pk_names_aref) = $self->find_data($table_name, $data_id, $option_href);
     my $pk_href = $self->pk_href($data_href, $pk_names_aref);
 
-    $self->db->delete($table_name, $pk_href);
+    $self->db->delete_cascade($table_name, $pk_href);
     $self->db->fast_insert($table_name, $data_href);
     for my $pk_name ( @{ $pk_names_aref || [] } ) {
         if ( !defined $pk_href->{$pk_name} ) {
@@ -178,7 +180,7 @@ sub _delete_each {
     return if ( !defined $pk_aref || !@{ $pk_aref } );
 
     my %pk = map{ $_ => $data_href->{$_} } @{ $pk_aref };
-    $self->db->delete($table_name, \%pk);
+    $self->db->delete_cascade($table_name, \%pk);
 }
 
 sub set_unique_keys {
