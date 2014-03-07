@@ -1,70 +1,57 @@
-#!perl
 use strict;
 use warnings;
 use Test::DataLoader;
-use DBI;
-use SQL::Executor;
 use Test::More;
 use Test::Mock::Guard qw(mock_guard);
 use Carp qw();
 use t::Util;
 
+
 subtest 'rollback_teardown (explicitly specified)', sub {
     my ($guard, $count_href) = init_mock_and_counter();
-    my $dbh = prepare_employee_db();
-    my $data = prepare_loader($dbh, $Test::DataLoader::rollback_teardown);
+    my $data = prepare_loader($Test::DataLoader::rollback_teardown);
 
     no_transaction_used_ok($data, $count_href);# no transaction issued before load
 
     $data->load('employee', 1);
 
     transaction_rollbacked_ok($data, $count_href);
-
-    $dbh->disconnect;
 };
 
 subtest 'rollback_teardown (default)', sub {
     my ($guard, $count_href) = init_mock_and_counter();
-    my $dbh = prepare_employee_db();
-    my $data = prepare_loader($dbh);
+    my $data = prepare_loader();
     $data->load('employee', 1);
 
     transaction_rollbacked_ok($data, $count_href);
-
-    $dbh->disconnect;
 };
 
 subtest 'delete_teardown', sub {
     my ($guard, $count_href) = init_mock_and_counter();
-    my $dbh = prepare_employee_db();
-    my $data = prepare_loader($dbh, $Test::DataLoader::delete_teardown);
+    my $data = prepare_loader($Test::DataLoader::delete_teardown);
     $data->load('employee', 1);
 
     no_transaction_used_ok($data, $count_href);
-
-    $dbh->disconnect;
 };
 
 subtest 'do_nothing_teardown', sub {
     my ($guard, $count_href) = init_mock_and_counter();
-    my $dbh = prepare_employee_db();
     my $guard_for_data_loader = mock_guard('Test::DataLoader', +{
         _do_delete_teardown => sub { Carp::croak "unexpected _do_delete_teardown called()" },
     });
-    my $data = prepare_loader($dbh, $Test::DataLoader::do_nothing_teardown);
+    my $data = prepare_loader($Test::DataLoader::do_nothing_teardown);
     $data->load('employee', 1);
 
     no_transaction_used_ok($data, $count_href);
-
-    $dbh->disconnect;
 };
 
 
 done_testing;
 
 sub prepare_loader {
-    my ($dbh, $teardown_style) = @_;
-    my $data = Test::DataLoader->new($dbh, { teardown => $teardown_style });
+    my ($teardown_style) = @_;
+    my $data = prepare(teardown => $teardown_style);
+
     $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',

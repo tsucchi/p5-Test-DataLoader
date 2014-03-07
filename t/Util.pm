@@ -3,17 +3,20 @@ use parent qw(Exporter);
 use strict;
 use warnings;
 
-our @EXPORT = qw(prepare_employee_db);
+our @EXPORT = qw(prepare);
 
-sub prepare_employee_db {
-    my $dbh = DBI->connect("dbi:SQLite:dbname=:memory:",'','');
-    $dbh->do("
+sub prepare {
+    my (%options) = @_;
+    my $connect_info = ["dbi:SQLite:dbname=:memory:", '', ''];
+    my $data = Test::DataLoader->new(connect_info => $connect_info, %options);
+    my $create_table = "
 CREATE TABLE employee (
   id      INTEGER PRIMARY KEY,
   name    TEXT
 );
-") or die $dbh->errstr;
-     return $dbh;
+";
+    $data->db->do($create_table);
+    return $data;
 }
 
 

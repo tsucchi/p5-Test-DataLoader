@@ -3,10 +3,12 @@ use strict;
 use warnings;
 use Carp qw();
 use DBIx::TransactionManager;
+use Otogiri;
+use Otogiri::Plugin;
 use File::Basename qw();
 
 use Class::Accessor::Lite (
-    ro => ['engine', 'teardown_style', 'txn_manager'],
+    ro => ['teardown_style', 'txn_manager', 'db'],
     rw => ['loaded', 'key_names', 'cleared'],
 );
 
@@ -17,12 +19,14 @@ our $delete_teardown     = 0;
 our $do_nothing_teardown = -1;
 
 sub new {
-    my ($class, $dbh, $option_href) = @_;
-    my $teardown_style = defined $option_href->{teardown} ? $option_href->{teardown} : $rollback_teardown;
-    my $txn = DBIx::TransactionManager->new($dbh);
+    my ($class, %args) = @_;
+    my $connect_info = $args{connect_info};
+    my $teardown_style = defined $args{teardown} ? $args{teardown} : $rollback_teardown;
+    my $db  = Otogiri->new( connect_info => $connect_info );
+    my $txn = DBIx::TransactionManager->new($db->dbh);
     my $self = {
         txn_manager    => $txn,
-        engine         => SQL::Executor->new($dbh, { allow_empty_condition => 0 }),
+        db             => $db,
         data           => {},
         loaded         => [],
         key_names      => {},
@@ -48,11 +52,11 @@ sub load {
     my ($data_href, $pk_names_aref) = $self->find_data($table_name, $data_id, $option_href);
     my $pk_href = $self->pk_href($data_href, $pk_names_aref);
 
-    $self->engine->delete($table_name, $pk_href);
-    $self->engine->insert($table_name, $data_href);
+    $self->db->delete($table_name, $pk_href);
+    $self->db->fast_insert($table_name, $data_href);
     for my $pk_name ( @{ $pk_names_aref || [] } ) {
         if ( !defined $pk_href->{$pk_name} ) {
-            my $id = $self->engine->last_insert_id();
+            my $id = $self->db->last_insert_id();
             $option_href->{$pk_name} = $id;
             $pk_href->{$pk_name}     = $id;
         }
@@ -64,7 +68,7 @@ sub load {
 
     return if ( !wantarray() );
 
-    my $row = $self->engine->select_row($table_name, $pk_href);
+    my $row = $self->db->single($table_name, $pk_href);
     return %{ $row || {} };
 }
 
@@ -138,7 +142,7 @@ sub _add_loaded {
 sub clear {
     my ($self) = @_;
 
-    if ( !$self->cleared && !$self->engine->dbh->ping ) { # may be disconnected
+    if ( !$self->cleared && !$self->db->dbh->ping ) { # may be disconnected
         Carp::croak "already disconnected but data is not cleared\n";
     }
 
@@ -174,7 +178,7 @@ sub _delete_each {
     return if ( !defined $pk_aref || !@{ $pk_aref } );
 
     my %pk = map{ $_ => $data_href->{$_} } @{ $pk_aref };
-    $self->engine->delete($table_name, \%pk);
+    $self->db->delete($table_name, \%pk);
 }
 
 sub set_unique_keys {

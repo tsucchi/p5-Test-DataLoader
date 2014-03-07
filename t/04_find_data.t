@@ -1,16 +1,12 @@
-#!perl
 use strict;
 use warnings;
 use Test::DataLoader;
-use DBI;
-use SQL::Executor;
 use Test::More;
 use t::Util;
 
-my $dbh = prepare_employee_db();
 
 subtest 'find_data scalar context', sub {
-    my $data = Test::DataLoader->new($dbh);
+    my $data = prepare();
     $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
@@ -21,7 +17,7 @@ subtest 'find_data scalar context', sub {
 };
 
 subtest 'find_data array context', sub {
-    my $data = Test::DataLoader->new($dbh);
+    my $data = prepare();
     $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
@@ -34,7 +30,7 @@ subtest 'find_data array context', sub {
 };
 
 subtest 'keys specified by set_unique_keys', sub {
-    my $data = Test::DataLoader->new($dbh);
+    my $data = prepare();
     $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
@@ -49,7 +45,7 @@ subtest 'keys specified by set_unique_keys', sub {
 };
 
 subtest 'find_data replaced by option', sub {
-    my $data = Test::DataLoader->new($dbh);
+    my $data = prepare();
     $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
@@ -59,9 +55,6 @@ subtest 'find_data replaced by option', sub {
     is( $data_href->{name}, 'bbb');
 };
 
-
-
-$dbh->disconnect;
 
 done_testing;
 
