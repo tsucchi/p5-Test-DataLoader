@@ -3,12 +3,13 @@ use strict;
 use warnings;
 use Carp qw();
 use DBIx::TransactionManager;
+use DBIx::Inspector;
 use Otogiri;
 use Otogiri::Plugin;
 use File::Basename qw();
 
 use Class::Accessor::Lite (
-    ro => ['teardown_style', 'txn_manager', 'db'],
+    ro => ['teardown_style', 'txn_manager', 'db', 'inspector'],
     rw => ['loaded', 'key_names', 'cleared'],
 );
 
@@ -26,8 +27,10 @@ sub new {
     my $teardown_style = defined $args{teardown} ? $args{teardown} : $rollback_teardown;
     my $db  = Otogiri->new( connect_info => $connect_info );
     my $txn = DBIx::TransactionManager->new($db->dbh);
+    my $inspector = DBIx::Inspector->new( dbh => $db->dbh );
     my $self = {
         txn_manager    => $txn,
+        inspector      => $inspector,
         db             => $db,
         data           => {},
         loaded         => [],
@@ -52,7 +55,9 @@ sub load {
     }
 
     my ($data_href, $pk_names_aref) = $self->find_data($table_name, $data_id, $option_href);
+    $pk_names_aref = $self->detect_primary_key($table_name) if ( !defined $pk_names_aref );
     my $pk_href = $self->pk_href($data_href, $pk_names_aref);
+    Carp::croak "primary key is not defined" if ( !defined $pk_href || !%{ $pk_href } );
 
     $self->db->delete_cascade($table_name, $pk_href);
     $self->db->fast_insert($table_name, $data_href);
@@ -180,12 +185,23 @@ sub _delete_each {
     return if ( !defined $pk_aref || !@{ $pk_aref } );
 
     my %pk = map{ $_ => $data_href->{$_} } @{ $pk_aref };
+    Carp::croak "Primary Key is not defined" if ( !%pk );
     $self->db->delete_cascade($table_name, \%pk);
 }
 
 sub set_unique_keys {
     my ($self, $table_name, @keys_arefs) = @_;
     $self->key_names->{$table_name} = \@keys_arefs;
+}
+
+sub detect_primary_key {
+    my ($self, $table_name) = @_;
+    my $table = $self->inspector->table($table_name);
+
+    return if ( !defined $table );
+
+    my @pk = map { $_->column_name } $table->primary_key();
+    return \@pk;
 }
 
 sub DESTROY {

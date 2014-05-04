@@ -4,6 +4,11 @@ use Test::DataLoader;
 use Test::More;
 use t::Util;
 
+subtest 'detect_primary_key', sub {
+    my $data = prepare();
+    is_deeply( $data->detect_primary_key('employee'), ['id']);
+};
+
 subtest 'add/load', sub {
     my $data = prepare();
     $data->add('employee', 1, {
@@ -23,11 +28,11 @@ subtest 'add/load', sub {
 
 subtest 'load twice but record is only 1(deleted before insert)', sub {
     my $data = prepare();
-
+    #use DBIx::QueryLog;
     $data->add('employee', 1, {
         id   => 123,
         name => 'aaa',
-    }, ['id']);
+    });
     $data->load('employee', 1);
     $data->load('employee', 1);
 
