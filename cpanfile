@@ -1,6 +1,7 @@
 requires 'Class::Accessor::Lite';
 requires 'DBI', '1.57';
 requires 'DBIx::TransactionManager';
+requires 'DBIx::Inspector';
 requires 'Otogiri', '0.06';
 requires 'Otogiri::Plugin', '0.02';
 requires 'Otogiri::Plugin::DeleteCascade';
