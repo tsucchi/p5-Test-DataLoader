@@ -281,7 +281,7 @@ Test::DataLoader - Load testdata into database
 
 =head1 DESCRIPTION
 
-Test::DataLoader is
+Test::DataLoader is testdata loader to database.
 
 =head1 AUTHOR
 

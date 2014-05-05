@@ -65,7 +65,7 @@ Test::DataLoader - Load testdata into database
 
 # DESCRIPTION
 
-Test::DataLoader is
+Test::DataLoader is testdata loader to database.
 
 # AUTHOR
 
