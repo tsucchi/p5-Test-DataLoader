@@ -48,6 +48,7 @@
          "requires" : {
             "Class::Accessor::Lite" : "0",
             "DBI" : "1.57",
+            "DBIx::Inspector" : "0",
             "DBIx::TransactionManager" : "0",
             "Otogiri" : "0.06",
             "Otogiri::Plugin" : "0.02",

@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/tsucchi/p5-Test-DataLoader.png?branch=master)](https://travis-ci.org/tsucchi/p5-Test-DataLoader) [![Coverage Status](https://coveralls.io/repos/tsucchi/p5-Test-DataLoader/badge.png?branch=master)](https://coveralls.io/r/tsucchi/p5-Test-DataLoader?branch=master)
 # NAME
 
 Test::DataLoader - Load testdata into database
