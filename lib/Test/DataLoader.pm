@@ -10,7 +10,7 @@ use File::Basename qw();
 use File::Spec;
 
 use Class::Accessor::Lite (
-    ro => ['teardown_style', 'txn_manager', 'db', 'inspector', 'base_dir'],
+    ro => ['teardown_style', 'txn_manager', 'db', 'inspector', 'base_dir', 'autoload_files'],
     rw => ['loaded', 'key_names', 'cleared'],
 );
 
@@ -38,6 +38,7 @@ sub new {
         key_names      => {},
         teardown_style => $teardown_style,
         base_dir       => $args{base_dir} || '',
+        autoload_files => {},
         cleared        => 1,
     };
     bless $self, $class;
@@ -55,6 +56,11 @@ sub load {
 
     if( $self->teardown_style eq $rollback_teardown && !$txn->in_transaction ) {
         $txn->txn_begin();
+    }
+
+    if ( $self->base_dir && !$self->autoload_files->{$table_name} ) {
+        $self->add_by_file("${table_name}.pl");
+        $self->autoload_files->{$table_name} = 1;
     }
 
     my ($data_href, $pk_names_aref) = $self->find_data($table_name, $data_id, $option_href);
