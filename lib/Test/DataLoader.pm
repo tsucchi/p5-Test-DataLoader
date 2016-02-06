@@ -7,9 +7,10 @@ use DBIx::Inspector;
 use Otogiri;
 use Otogiri::Plugin;
 use File::Basename qw();
+use File::Spec;
 
 use Class::Accessor::Lite (
-    ro => ['teardown_style', 'txn_manager', 'db', 'inspector'],
+    ro => ['teardown_style', 'txn_manager', 'db', 'inspector', 'base_dir'],
     rw => ['loaded', 'key_names', 'cleared'],
 );
 
@@ -36,6 +37,7 @@ sub new {
         loaded         => [],
         key_names      => {},
         teardown_style => $teardown_style,
+        base_dir       => $args{base_dir} || '',
         cleared        => 1,
     };
     bless $self, $class;
@@ -50,17 +52,26 @@ sub load {
     my ($self, $table_name, $data_id, $option_href) = @_;
 
     my $txn = $self->txn_manager;
+
     if( $self->teardown_style eq $rollback_teardown && !$txn->in_transaction ) {
         $txn->txn_begin();
     }
 
     my ($data_href, $pk_names_aref) = $self->find_data($table_name, $data_id, $option_href);
-    $pk_names_aref = $self->detect_primary_key($table_name) if ( !defined $pk_names_aref );
+
+    if ( !defined $pk_names_aref ) {
+        $pk_names_aref = $self->detect_primary_key($table_name);
+    }
+
     my $pk_href = $self->pk_href($data_href, $pk_names_aref);
-    Carp::croak "primary key is not defined" if ( !defined $pk_href || !%{ $pk_href } );
+
+    if ( !defined $pk_href || !%{ $pk_href } ) {
+        Carp::croak "primary key is not defined";
+    }
 
     $self->db->delete_cascade($table_name, $pk_href);
     $self->db->fast_insert($table_name, $data_href);
+
     for my $pk_name ( @{ $pk_names_aref || [] } ) {
         if ( !defined $pk_href->{$pk_name} ) {
             my $id = $self->db->last_insert_id();
@@ -81,11 +92,22 @@ sub load {
 
 sub add_by_file {
     my ($self, $file_name) = @_;
-    Carp::croak("$file_name is not exist")    if ( !-e $file_name );
-    Carp::croak("$file_name is not .pl file") if ( $file_name !~ qr/\.pl$/ );
+
+    if ( $self->base_dir ) {
+        $file_name = File::Spec->catfile($self->base_dir, $file_name);
+    }
+
+    if ( !-e $file_name ) {
+        Carp::croak("$file_name is not exist");
+    }
+    elsif ( $file_name !~ qr/\.pl$/ ) {
+        Carp::croak("$file_name is not .pl file");
+    }
 
     my $value = do($file_name);
-    Carp::croak($@) if ( $@ );
+    if ( $@ ) {
+        Carp::croak($@);
+    }
 
     if( !defined $value->{table_name} ) {
         ($value->{table_name} = File::Basename::basename($file_name)) =~ s/\.pl$//;
@@ -98,13 +120,22 @@ sub _add_data {
 
     my $table_name = $value->{table_name};
     my $key        = $value->{unique_keys};
-    Carp::croak("can't determin primary key") if ( !defined $key || ref $key ne 'ARRAY' );
 
-    $key = [$key] if ( ref $key->[0] ne 'ARRAY' );
+    if ( !defined $key || ref $key ne 'ARRAY' ) {
+        Carp::croak("can't determin primary key");
+    }
+
+    if ( ref $key->[0] ne 'ARRAY' ) {
+        $key = [$key];
+    }
+
     $self->set_unique_keys($table_name, @{ $key });
 
     my $data = $value->{data};
-    Carp::croak("data not found") if ( !defined $data );
+
+    if ( !defined $data ) {
+        Carp::croak("data not found");
+    }
 
     for my $datum_key ( sort keys %{ $data } ) {
         $self->add($table_name, $datum_key, $data->{$datum_key});
@@ -113,11 +144,17 @@ sub _add_data {
 
 sub find_data {
     my ($self, $table_name, $data_id, $option_href) = @_;
+
     my ($data_href, $pk_names_aref) = @{ $self->{data}->{$table_name}->{$data_id} };
-    $pk_names_aref = $self->key_names->{$table_name}->[0] if ( !defined $pk_names_aref );
+
+    if ( !defined $pk_names_aref ) {
+        $pk_names_aref = $self->key_names->{$table_name}->[0];
+    }
+
     for my $key ( keys %{ $option_href || {} } ) {
         $data_href->{$key} = $option_href->{$key};
     }
+
     return ($data_href, $pk_names_aref) if ( wantarray() );
     return $data_href;
 }
@@ -185,7 +222,11 @@ sub _delete_each {
     return if ( !defined $pk_aref || !@{ $pk_aref } );
 
     my %pk = map{ $_ => $data_href->{$_} } @{ $pk_aref };
-    Carp::croak "Primary Key is not defined" if ( !%pk );
+
+    if ( !%pk ) {
+        Carp::croak "Primary Key is not defined";
+    }
+
     $self->db->delete_cascade($table_name, \%pk);
 }
 
@@ -206,7 +247,10 @@ sub detect_primary_key {
 
 sub DESTROY {
     my ($self) = @_;
-    Carp::carp("clear was not called") if ( !$self->cleared );
+
+    if ( !$self->cleared ) {
+        Carp::carp("clear was not called");
+    }
     $self->clear;
 }
 
