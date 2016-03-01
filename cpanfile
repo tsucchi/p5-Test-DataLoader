@@ -7,6 +7,7 @@ requires 'Otogiri::Plugin', '0.02';
 requires 'Otogiri::Plugin::DeleteCascade';
 requires 'parent';
 requires 'perl', '5.008';
+requires 'List::MoreUtils';
 
 on configure => sub {
     requires 'CPAN::Meta';

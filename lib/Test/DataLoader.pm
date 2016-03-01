@@ -8,6 +8,7 @@ use Otogiri;
 use Otogiri::Plugin;
 use File::Basename qw();
 use File::Spec;
+use List::MoreUtils qw(all);
 
 use Class::Accessor::Lite (
     ro => ['teardown_style', 'txn_manager', 'db', 'inspector', 'base_dir', 'autoload_files'],
@@ -75,7 +76,9 @@ sub load {
         Carp::croak "primary key is not defined";
     }
 
-    $self->db->delete_cascade($table_name, $pk_href);
+    if ( all { defined $_ } values %{ $pk_href } ) {
+        $self->db->delete_cascade($table_name, $pk_href);
+    }
     $self->db->fast_insert($table_name, $data_href);
 
     for my $pk_name ( @{ $pk_names_aref || [] } ) {
@@ -86,7 +89,7 @@ sub load {
         }
     }
     if ( $self->teardown_style eq $delete_teardown ) {
-        $self->_add_loaded($table_name, $data_id, $option_href);
+        $self->_add_loaded($table_name, $pk_href);
     }
     $self->cleared(0);
 
@@ -173,20 +176,9 @@ sub pk_href {
 }
 
 sub _add_loaded {
-    my ($self, $table_name, $data_id, $option_href) = @_;
-    my ($data_href, $pk_aref) = $self->find_data($table_name, $data_id, $option_href);
+    my ($self, $table_name, $pk_href) = @_;
 
-    if( defined $pk_aref ) {
-        push @{ $self->loaded }, [$table_name, $data_href, $pk_aref];
-    }
-    elsif( defined $self->key_names->{$table_name} ) {
-        for my $pk_aref ( @{ $self->key_names->{$table_name} } ) {
-            push @{ $self->loaded }, [$table_name, $data_href, $pk_aref];
-        }
-    }
-    else {
-        Carp::croak("primary key is not defined in $table_name : $data_id");
-    }
+    push @{ $self->loaded }, [$table_name, $pk_href];
 }
 
 sub clear {
@@ -223,17 +215,12 @@ sub _do_delete_teardown {
 
 sub _delete_each {
     my ($self, $datum) = @_;
-    my ($table_name, $data_href, $pk_aref) = @{ $datum };
+    my ($table_name, $pk_href) = @{ $datum };
 
-    return if ( !defined $pk_aref || !@{ $pk_aref } );
-
-    my %pk = map{ $_ => $data_href->{$_} } @{ $pk_aref };
-
-    if ( !%pk ) {
-        Carp::croak "Primary Key is not defined";
+    if ( !defined $pk_href || !%{ $pk_href } ) {
+        return 
     }
-
-    $self->db->delete_cascade($table_name, \%pk);
+    $self->db->delete_cascade($table_name, $pk_href);
 }
 
 sub set_unique_keys {
