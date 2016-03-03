@@ -77,7 +77,7 @@ sub load {
     }
 
     if ( all { defined $_ } values %{ $pk_href } ) {
-        $self->db->delete_cascade($table_name, $pk_href);
+        $self->db->delete($table_name, $pk_href);
     }
     $self->db->fast_insert($table_name, $data_href);
 
