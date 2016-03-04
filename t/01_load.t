@@ -44,6 +44,23 @@ subtest 'load twice but record is only 1(deleted before insert)', sub {
     $data->clear;
 };
 
+subtest 'load using auto_increment (deleted is not issued because PK value is different)', sub {
+    my $data = prepare( teardown => $Test::DataLoader::delete_teardown );
+    $data->add('employee', 1, {
+        name => 'aaa',
+    });
+    $data->load('employee', 1);
+    $data->load('employee', 1);
+    $data->load('employee', 1);
+
+    my $db = $data->db;
+    my @rows = $db->select('employee', { });
+    is( scalar(@rows), 3);
+
+    $data->clear;
+};
+
+
 
 subtest 'load with return value', sub {
     my $data = prepare();

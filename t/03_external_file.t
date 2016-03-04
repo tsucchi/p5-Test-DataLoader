@@ -24,6 +24,34 @@ subtest 'add by external file and load', sub {
     $data->clear;
 };
 
+subtest 'add_by_file with using base_dir option', sub {
+    my $data = prepare( base_dir => 't/file');
+
+    $data->add_by_file('employee.pl');
+    $data->load('employee', 1);
+
+    my $db = $data->db;
+    my $row = $db->single('employee', { id => 123 });
+    is( $row->{name}, 'aaa');
+
+    $data->clear;
+};
+
+subtest 'autoload', sub {
+    my $data = prepare( base_dir => 't/file');
+
+    #$data->add_by_file('employee.pl'); # this file is loaded automatically
+    $data->load('employee', 1);
+
+    my $db = $data->db;
+    my $row = $db->single('employee', { id => 123 });
+    is( $row->{name}, 'aaa');
+
+    $data->clear;
+};
+
+
+
 
 
 done_testing;
