@@ -25,7 +25,7 @@ sub new {
     my ($class, %args) = @_;
     my $connect_info = $args{connect_info};
     my $teardown_style = defined $args{teardown} ? $args{teardown} : $rollback_teardown;
-    my $db  = Otogiri->new( connect_info => $connect_info );
+    my $db  = Otogiri->new( connect_info => $connect_info, strict => 0 );
     my $txn = DBIx::TransactionManager->new($db->dbh);
     my $inspector = DBIx::Inspector->new( dbh => $db->dbh );
     my $self = {
